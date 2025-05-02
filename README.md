@@ -1,24 +1,39 @@
-const form   = document.getElementById('simForm');
-const runBtn = document.getElementById('runSim');
+document.addEventListener('DOMContentLoaded', () => {
+  const form   = document.getElementById('simForm');
+  const runBtn = document.getElementById('runSim');
 
-form.addEventListener('input', () => {
-  runBtn.disabled = !form.checkValidity();
-});
+  function isFormReallyValid() {
+    // grab all form controls you care about
+    const controls = [...form.querySelectorAll('input, select, textarea')];
+    for (const ctrl of controls) {
+      // 1) if it's a default-zero number and blank → skip validity
+      if (
+        ctrl.type === 'number' &&
+        ctrl.classList.contains('default-zero') &&
+        ctrl.value.trim() === ''
+      ) continue;
 
-form.addEventListener('submit', e => {
-  // 1) Default any blank “.default-zero” fields to 0
-  form
-    .querySelectorAll('input[type="number"].default-zero')
-    .forEach(input => {
-      if (input.value.trim() === '') {
-        input.value = 0;
-      }
-    });
-
-  // 2) Then run your normal validity guard
-  if (!form.checkValidity()) {
-    e.preventDefault();
-    form.reportValidity();
+      // 2) otherwise use the browser check
+      if (!ctrl.checkValidity()) return false;
+    }
+    return true;
   }
-  // else: form will submit (or you kick off your JS simulation)
+
+  // enable/disable on any change
+  form.addEventListener('input', () => {
+    runBtn.disabled = !isFormReallyValid();
+  });
+
+  form.addEventListener('submit', e => {
+    // default blanks → zero
+    form.querySelectorAll('input.default-zero[type="number"]')
+      .forEach(i => { if (i.value.trim() === '') i.value = 0 });
+
+    // then do your normal validity guard
+    if (!form.checkValidity()) {
+      e.preventDefault();
+      form.reportValidity();
+    }
+    // else: form is valid and will submit
+  });
 });
