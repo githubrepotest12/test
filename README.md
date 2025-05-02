@@ -1,28 +1,21 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const pauseInput = document.getElementById('licdurshow');
-  let blankTimer;
+document.querySelectorAll('input.auto-default-min').forEach(input => {
+  let timer;
 
-  pauseInput.addEventListener('blur', () => {
-    // only start the timer if it’s still blank
-    if (pauseInput.value.trim() === '') {
-      blankTimer = setTimeout(() => {
-        // pick up the defined min (fallback to 0)
-        const minVal = pauseInput.min ? parseFloat(pauseInput.min) : 0;
-
-        // autofill & notify
-        pauseInput.value = minVal;
+  input.addEventListener('blur', () => {
+    if (input.value.trim() === '') {
+      timer = setTimeout(() => {
+        const minVal = parseFloat(input.min) || 0;
+        input.value = minVal;
         showInputToast(
-          `No minutes entered — defaulting to minimum of ${minVal}.`,
-          pauseInput
+          `No value entered — defaulting to minimum of ${minVal}.`,
+          input
         );
-
-        // re-validate your Run button (if you have isFormValid())
-        document.getElementById('runSim').disabled = !isFormValid();
+        runBtn.disabled = !isFormValid();
       }, 5000);
     }
   });
 
-  // if they focus back or type, cancel the pending autofill
-  pauseInput.addEventListener('focus', () => clearTimeout(blankTimer));
-  pauseInput.addEventListener('input', () => clearTimeout(blankTimer));
+  ['focus','input'].forEach(evt =>
+    input.addEventListener(evt, () => clearTimeout(timer))
+  );
 });
