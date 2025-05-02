@@ -1,33 +1,49 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const autoFields = document.querySelectorAll('input.auto-default-min');
-  console.log('Found auto-default fields:', autoFields);
+  const form   = document.getElementById('simForm');
+  const runBtn = document.getElementById('runSim');
 
-  autoFields.forEach(input => {
-    console.log('Binding blur handler to:', input);
-    let timer;
+  // helper to test “valid enough” (your existing isFormValid)
+  function isFormValid() { /* … */ }
 
-    input.addEventListener('blur', () => {
-      console.log('Blur fired on:', input);
-      if (input.value.trim() === '') {
-        console.log('Starting 5s timer for blank field…');
-        timer = setTimeout(() => {
-          const minVal = parseFloat(input.min) || 0;
-          console.log(`Timer done → autofilling ${minVal}`);
-          input.value = minVal;
-          showInputToast(
-            `No value entered — defaulting to minimum of ${minVal}.`,
-            input
-          );
-          runBtn.disabled = !isFormValid();
-        }, 5000);
-      }
+  // delegate focusout (bubbling version of blur) to start the 5s timer
+  form.addEventListener('focusout', e => {
+    const input = e.target.closest('input.auto-default-min');
+    if (!input) return;
+    if (input.value.trim() === '') {
+      // stash a timer ID on the element itself
+      input._autoDefaultTimer = setTimeout(() => {
+        const minVal = parseFloat(input.min) || 0;
+        input.value = minVal;
+        showInputToast(
+          `No value entered—defaulting to minimum of ${minVal}.`,
+          input
+        );
+        runBtn.disabled = !isFormValid();
+      }, 5000);
+    }
+  });
+
+  // delegate focusin (bubbling version of focus) and input to cancel that timer
+  form.addEventListener('focusin',  e => {
+    const input = e.target.closest('input.auto-default-min');
+    if (input && input._autoDefaultTimer) clearTimeout(input._autoDefaultTimer);
+  });
+  form.addEventListener('input',    e => {
+    const input = e.target.closest('input.auto-default-min');
+    if (input && input._autoDefaultTimer) clearTimeout(input._autoDefaultTimer);
+    
+    // also keep your “enable button” logic up to date
+    runBtn.disabled = !isFormValid();
+  });
+
+  // (optional) on submit you still zero-fill and validate as before
+  form.addEventListener('submit', e => {
+    form.querySelectorAll('input.auto-default-min').forEach(i => {
+      if (i.value.trim() === '') i.value = parseFloat(i.min)||0;
     });
-
-    ['focus', 'input'].forEach(evt => {
-      input.addEventListener(evt, () => {
-        console.log(`${evt} on ${input.id} → clearing timer`);
-        clearTimeout(timer);
-      });
-    });
+    if (!isFormValid()) {
+      e.preventDefault();
+      form.reportValidity();
+    }
   });
 });
