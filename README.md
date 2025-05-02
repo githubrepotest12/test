@@ -1,39 +1,33 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const form   = document.getElementById('simForm');
-  const runBtn = document.getElementById('runSim');
+  // 1) Grab all your default-zero fields
+  const zeroFields = form.querySelectorAll('input[type="number"].default-zero');
 
-  function isFormReallyValid() {
-    // grab all form controls you care about
-    const controls = [...form.querySelectorAll('input, select, textarea')];
-    for (const ctrl of controls) {
-      // 1) if it's a default-zero number and blank → skip validity
-      if (
-        ctrl.type === 'number' &&
-        ctrl.classList.contains('default-zero') &&
-        ctrl.value.trim() === ''
-      ) continue;
+  zeroFields.forEach(input => {
+    let timerId;
 
-      // 2) otherwise use the browser check
-      if (!ctrl.checkValidity()) return false;
-    }
-    return true;
-  }
+    // When they leave the field…
+    input.addEventListener('blur', () => {
+      // only if it’s still blank
+      if (input.value.trim() === '') {
+        timerId = setTimeout(() => {
+          // determine your minimum
+          const min = input.min 
+            ? parseFloat(input.min) 
+            : (input.dataset.min ? parseFloat(input.dataset.min) : 0);
 
-  // enable/disable on any change
-  form.addEventListener('input', () => {
-    runBtn.disabled = !isFormReallyValid();
+          // autofill & toast
+          input.value = min;
+          showInputToast(
+            `No value entered → defaulting to minimum of ${min}.`, 
+            input
+          );
+
+          // re-run your “enable button?” check
+          runBtn.disabled = !isFormValid();
+        }, 5_000);
+      }
+    });
+
+    // if they focus back or type something, cancel the timer
+    input.addEventListener('focus', () => clearTimeout(timerId));
+    input.addEventListener('input', () => clearTimeout(timerId));
   });
-
-  form.addEventListener('submit', e => {
-    // default blanks → zero
-    form.querySelectorAll('input.default-zero[type="number"]')
-      .forEach(i => { if (i.value.trim() === '') i.value = 0 });
-
-    // then do your normal validity guard
-    if (!form.checkValidity()) {
-      e.preventDefault();
-      form.reportValidity();
-    }
-    // else: form is valid and will submit
-  });
-});
