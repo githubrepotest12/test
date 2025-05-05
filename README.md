@@ -1,45 +1,21 @@
-function addScenario() {
-        
-        makeNextScen();
-        costEscDefault();
-        lotDefaults();
-        var bool = true;
-        toggleFOPT()
+function attachAutoDefault(input, showInputToast, isFormValid, runBtn) {
+  let timer;
 
-        var uniq = document.getElementById('uniqId').checked;
-        var fore = document.getElementsByClassName("genUnique");
-        var endfore = document.getElementsByClassName("forecast");
-        if ("&AdminUser." == "true") {
-            for (var i = 0; i < endfore.length; i++) {
-                endfore.item(i).style.display = "block";
-            }
-        }
-        else{
-            for (var i = 0; i < endfore.length; i++) {
-                endfore.item(i).style.display = "none";
-            }
-        }
-
-        if (uniq) {
-            for (var i = 0; i < fore.length; i++) {
-                fore.item(i).style.display = "block";
-            }
-        }
-        else {
-            for (var i = 0; i < fore.length; i++) {
-                fore.item(i).style.display = "none";
-            }
-        }
-
-        document.getElementById('scencount').value = x;
-        x++;
-
-        var scenx = x - 1;
-        
-        if ("&AdminUser." == "true") {
-            var scenScroll = document.getElementById("scenario" + scenx).offsetTop + 1525;
-        } else {
-            var scenScroll = document.getElementById("scenario" + scenx).offsetTop + 1125;
-        }
-        window.scroll(0, scenScroll);
+  input.addEventListener('blur', () => {
+    if (input.value.trim() === '') {
+      timer = setTimeout(() => {
+        const minVal = parseFloat(input.min) || 0;
+        input.value = minVal;
+        showInputToast(
+          `No value entered—defaulting to minimum of ${minVal}.`,
+          input
+        );
+        runBtn.disabled = !isFormValid();
+      }, 5000);
     }
+  });
+
+  const cancel = () => clearTimeout(timer);
+  input.addEventListener('focus', cancel);
+  input.addEventListener('input',  cancel);
+}
