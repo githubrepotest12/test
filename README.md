@@ -1,21 +1,11 @@
-function attachAutoDefault(input, showInputToast, isFormValid, runBtn) {
-  let timer;
+document.addEventListener('DOMContentLoaded', () => {
+  const form   = document.getElementById('simForm');
+  const runBtn = document.getElementById('runSim');
 
-  input.addEventListener('blur', () => {
-    if (input.value.trim() === '') {
-      timer = setTimeout(() => {
-        const minVal = parseFloat(input.min) || 0;
-        input.value = minVal;
-        showInputToast(
-          `No value entered—defaulting to minimum of ${minVal}.`,
-          input
-        );
-        runBtn.disabled = !isFormValid();
-      }, 5000);
-    }
-  });
+  // 1) bind every existing auto-default-min field
+  form
+    .querySelectorAll('input.auto-default-min[type="number"]')
+    .forEach(i => attachAutoDefault(i, showInputToast, isFormValid, runBtn));
 
-  const cancel = () => clearTimeout(timer);
-  input.addEventListener('focus', cancel);
-  input.addEventListener('input',  cancel);
-}
+  // 2) …your existing form logic (enable/disable runBtn, submit handler)…
+});
