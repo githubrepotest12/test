@@ -1,6 +1,34 @@
-SYMBOLGEN:  Macro variable MAIC_LINE_ITEM resolves to 1
-WARNING: Apparent symbolic reference LI_SIM not resolved.
-ERROR: A character operand was found in the %EVAL function or %IF condition where a numeric operand is required. The condition was: 
-       &MAIC_line_item. = 1 or &LI_Sim. = 1 
-ERROR: The macro CUSTOM_EXCEL_IMPORT will stop executing.
-MLOGIC(CUSTOM_EXCEL_IMPORT):  Ending execution.
+*Error checks;
+		data maic.bootstrapping_attrib;
+			set work.bootstrapping_attrib; *change to boostrapping_attrib when done;
+				length NIIN $ 9 NIINFinal $ 9;
+				
+				*Delete row if NIIN does not exsist;
+				if niin = '' then delete;
+				
+	 		    *Adjsut NIIN to 9 characters because excel autoformats csv files and drops the leading 0s;
+				NIINFinal = reverse(substr(reverse(cats('00000000', strip(compress(NIIN, '-')))), 1,9));
+			
+				*Round import values; 
+				ALT = round(ALT, .001); 
+				PLT = round(PLT, .001); 
+ 				UnitCost = round(UnitCost, .001);
+				
+				*Error if missing critical data;
+				if missing(RMC) or missing(ALT) or missing(PLT) or missing(UnitCost) then do; 
+					put 'ERROR: MISSING CRITICAL DATA: '
+					NIIN= RMC= ALT= PLT= UNITCOST= /;
+					abort; 
+				end;
+				
+	
+				*Error if any numeric variable is negative;
+				if ALT<0 or PLT<0 or UnitCost<0 then do;
+					put 'ERROR: NEGATIVE OR NON-NUMERIC DATA PRESENT: '
+					NIIN= ALT= PLT= UNITCOST=/;
+					abort;
+				end;
+						
+				drop NIIN;
+				rename NIINFinal = NIIN;
+		run;
